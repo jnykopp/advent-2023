@@ -8,8 +8,6 @@
 (defun hand-type (hand)
   (sort (loop :for c :across *card-vals* :for n := (count c hand) :when (> n 0) :collect n) #'>))
 
-(defparameter *hand-type-fn* #'hand-type)
-
 (defun parse-input (fname)
   (loop :for line :in (uiop:read-file-lines fname) :for count :from 1
         :for (hand bid-str) := (uiop:split-string line)
@@ -40,6 +38,7 @@
         :sum winnings))
 
 (defun solve-part-1 (fname)
+  (let ((*hand-type-fn* #'hand-type)))
   (destructuring-bind (hnbs . max-rank) (parse-input fname)
     (count-ranks (group-hands-n-bids hnbs) max-rank)))
 
