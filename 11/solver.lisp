@@ -1,0 +1,40 @@
+(defun read-input-array (fname)
+  (let* ((array (uiop:read-file-string fname))
+         (line-len (1+ (position #\Newline array)))
+         (height (/ (length array) line-len)))
+    (make-array (list height line-len) :element-type 'character :displaced-to array)))
+
+(defun find-galaxies (array)
+  (loop :for y :below (array-dimension array 0)
+        :append (loop :for x :below (1- (array-dimension array 1))
+                      :when (char= (aref array y x) #\#) :collect (cons y x))))
+
+(defun find-empty (galaxies arr-x arr-y)
+  (flet ((check (span selector)
+           (set-difference (loop :for n :below span :collect n) (mapcar selector galaxies))))
+    (cons (sort (check arr-x #'car) #'<) (sort (check arr-y #'cdr) #'<))))
+
+(defun expand-galaxies (galaxies empty-y-x &optional (scaler 1))
+  (flet ((inc-coord (selector)
+           (loop :with empties := (funcall selector empty-y-x)
+                 :for n :in (mapcar selector galaxies)
+                 :collect (+ n (* scaler (or (position n empties :test #'<) (length empties)))))))
+    (mapcar #'cons (inc-coord #'car) (inc-coord #'cdr))))
+
+(defun dist-galaxies (galaxies)
+  (loop :for (gy1 . gx1) := (pop galaxies)
+        :sum (loop :for (gy2 . gx2) :in galaxies
+                   :sum (+ (abs (- gy2 gy1)) (abs (- gx2 gx1))))
+        :while galaxies))
+
+(defun solve-part-1 (fname)
+  (let* ((array (read-input-array fname))
+         (unex-galaxies (find-galaxies array))
+         (empties (apply #'find-empty unex-galaxies (array-dimensions array))))
+    (dist-galaxies (expand-galaxies unex-galaxies empties))))
+
+(defun solve-part-2 (fname)
+  (let* ((array (read-input-array fname))
+         (unex-galaxies (find-galaxies array))
+         (empties (apply #'find-empty unex-galaxies (array-dimensions array))))
+    (dist-galaxies (expand-galaxies unex-galaxies empties 999999))))
